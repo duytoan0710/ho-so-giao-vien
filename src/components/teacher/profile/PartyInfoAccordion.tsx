@@ -31,17 +31,17 @@ const PartyInfoAccordion = () => {
     <Accordion type="single" collapsible>
       <AccordionItem value="party-info">
         <AccordionTrigger className="accordion-trigger">
-          <span className="text-base font-medium">Thông tin Đảng & Đoàn thể</span>
+          <span className="text-lg font-semibold">Thông tin Đảng & Đoàn thể</span>
         </AccordionTrigger>
         <AccordionContent className="accordion-content">
           <div className="space-y-6">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3 p-4 bg-muted/30 rounded-lg">
               <Checkbox 
                 id="party-member"
                 checked={isPartyMember}
                 onCheckedChange={(checked) => setIsPartyMember(checked === true)}
               />
-              <Label htmlFor="party-member" className="form-label mb-0">Là đảng viên</Label>
+              <Label htmlFor="party-member" className="form-label mb-0 text-base font-semibold">Là đảng viên</Label>
             </div>
 
             {isPartyMember && (
@@ -54,7 +54,7 @@ const PartyInfoAccordion = () => {
                         variant="outline"
                         className={cn(
                           "form-input justify-start text-left font-normal",
-                          !partyOfficialDate && "text-text-muted"
+                          !partyOfficialDate && "text-muted-foreground"
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -67,7 +67,6 @@ const PartyInfoAccordion = () => {
                         selected={partyOfficialDate}
                         onSelect={setPartyOfficialDate}
                         initialFocus
-                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
@@ -81,7 +80,7 @@ const PartyInfoAccordion = () => {
                         variant="outline"
                         className={cn(
                           "form-input justify-start text-left font-normal",
-                          !partyProbationDate && "text-text-muted"
+                          !partyProbationDate && "text-muted-foreground"
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -94,7 +93,6 @@ const PartyInfoAccordion = () => {
                         selected={partyProbationDate}
                         onSelect={setPartyProbationDate}
                         initialFocus
-                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
@@ -111,7 +109,7 @@ const PartyInfoAccordion = () => {
                       variant="outline"
                       className={cn(
                         "form-input justify-start text-left font-normal",
-                        !unionDate && "text-text-muted"
+                        !unionDate && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -124,7 +122,6 @@ const PartyInfoAccordion = () => {
                       selected={unionDate}
                       onSelect={setUnionDate}
                       initialFocus
-                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
@@ -138,7 +135,7 @@ const PartyInfoAccordion = () => {
                       variant="outline"
                       className={cn(
                         "form-input justify-start text-left font-normal",
-                        !militaryDate && "text-text-muted"
+                        !militaryDate && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -151,7 +148,6 @@ const PartyInfoAccordion = () => {
                       selected={militaryDate}
                       onSelect={setMilitaryDate}
                       initialFocus
-                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>

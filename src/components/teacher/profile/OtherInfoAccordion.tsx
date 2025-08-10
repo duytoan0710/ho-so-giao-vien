@@ -18,7 +18,7 @@ const OtherInfoAccordion = () => {
     <Accordion type="single" collapsible>
       <AccordionItem value="other-info">
         <AccordionTrigger className="accordion-trigger">
-          <span className="text-base font-medium">Thông tin khác</span>
+          <span className="text-lg font-semibold">Thông tin khác</span>
         </AccordionTrigger>
         <AccordionContent className="accordion-content">
           <div className="space-y-6">
@@ -33,10 +33,10 @@ const OtherInfoAccordion = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
               <div>
                 <Label className="form-label mb-1">Cá nhân thuộc đối tượng chính sách</Label>
-                <p className="text-sm text-text-muted">
+                <p className="text-sm text-muted-foreground">
                   Đánh dấu nếu giáo viên thuộc diện chính sách ưu tiên
                 </p>
               </div>
@@ -49,7 +49,7 @@ const OtherInfoAccordion = () => {
             <div className="form-group">
               <Label className="form-label">Ghi chú</Label>
               <Textarea 
-                className="form-input resize-none" 
+                className="form-input resize-none min-h-[120px]" 
                 rows={4}
                 placeholder="Thông tin bổ sung khác..."
               />

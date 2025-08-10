@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, Filter, ChevronRight } from 'lucide-react';
+import { Search, Filter, ChevronRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
@@ -85,24 +85,29 @@ const TeacherList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted p-page">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="page-title">Quản lý Giáo viên</h1>
-          <p className="text-text-muted">Tìm kiếm và quản lý thông tin giáo viên trong trường</p>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Users className="w-6 h-6 text-primary" />
+            </div>
+            <h1 className="page-title">Quản lý Giáo viên</h1>
+          </div>
+          <p className="text-muted-foreground text-lg">Tìm kiếm và quản lý thông tin giáo viên trong trường</p>
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="bg-surface-primary p-6 rounded-lg border border-border mb-6 animate-fade-in">
+        <div className="bg-card p-6 rounded-xl border border-border mb-8 shadow-sm animate-fade-in">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
                 placeholder="Tìm kiếm theo tên, mã giáo viên hoặc tổ chuyên môn..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10 form-input"
+                className="pl-12 form-input text-base"
               />
             </div>
             <Button variant="outline" className="btn-secondary">
@@ -113,17 +118,17 @@ const TeacherList = () => {
         </div>
 
         {/* Teachers Table */}
-        <div className="bg-surface-primary rounded-lg border border-border overflow-hidden animate-slide-in">
+        <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm animate-slide-in">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-surface-secondary border-b border-border">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-text-primary">Mã GV</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-text-primary">Họ và tên</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-text-primary">Chức vụ</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-text-primary">Tổ chuyên môn</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-text-primary">Liên hệ</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-text-primary">Trạng thái</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">Mã GV</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">Họ và tên</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">Chức vụ</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">Tổ chuyên môn</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">Liên hệ</th>
+                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">Trạng thái</th>
                   <th className="w-12 py-4 px-6"></th>
                 </tr>
               </thead>
@@ -132,16 +137,16 @@ const TeacherList = () => {
                   <tr 
                     key={teacher.id}
                     onClick={() => handleTeacherClick(teacher.id)}
-                    className="border-b border-border hover:bg-education-light cursor-pointer transition-colors duration-200"
+                    className="border-b border-border hover:bg-accent cursor-pointer transition-all duration-200"
                   >
-                    <td className="py-4 px-6 text-sm font-medium text-text-primary">{teacher.code}</td>
+                    <td className="py-4 px-6 text-sm font-semibold text-primary">{teacher.code}</td>
                     <td className="py-4 px-6">
-                      <div className="text-sm font-medium text-text-primary">{teacher.name}</div>
+                      <div className="text-base font-semibold text-foreground">{teacher.name}</div>
                     </td>
-                    <td className="py-4 px-6 text-sm text-text-secondary">{teacher.position}</td>
-                    <td className="py-4 px-6 text-sm text-text-secondary">{teacher.department}</td>
+                    <td className="py-4 px-6 text-sm text-muted-foreground font-medium">{teacher.position}</td>
+                    <td className="py-4 px-6 text-sm text-muted-foreground font-medium">{teacher.department}</td>
                     <td className="py-4 px-6">
-                      <div className="text-sm text-text-secondary">
+                      <div className="text-sm text-muted-foreground font-medium space-y-1">
                         <div>{teacher.email}</div>
                         <div>{teacher.phone}</div>
                       </div>
@@ -150,7 +155,7 @@ const TeacherList = () => {
                       {getStatusBadge(teacher.status)}
                     </td>
                     <td className="py-4 px-6">
-                      <ChevronRight className="w-4 h-4 text-text-muted" />
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
                     </td>
                   </tr>
                 ))}
@@ -160,7 +165,7 @@ const TeacherList = () => {
         </div>
 
         {/* Results Summary */}
-        <div className="mt-6 text-sm text-text-muted">
+        <div className="mt-6 text-sm text-muted-foreground font-medium">
           Hiển thị {filteredTeachers.length} trên tổng số {mockTeachers.length} giáo viên
         </div>
       </div>

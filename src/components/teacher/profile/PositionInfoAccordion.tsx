@@ -20,7 +20,7 @@ const PositionInfoAccordion = () => {
     <Accordion type="single" collapsible>
       <AccordionItem value="position-info">
         <AccordionTrigger className="accordion-trigger">
-          <span className="text-base font-medium">Vị trí công tác</span>
+          <span className="text-lg font-semibold">Vị trí công tác</span>
         </AccordionTrigger>
         <AccordionContent className="accordion-content">
           <div className="form-grid">
@@ -52,7 +52,7 @@ const PositionInfoAccordion = () => {
               </Select>
             </div>
 
-            <div className="form-group">
+            <div className="form-group lg:col-span-2">
               <Label className="form-label">Tổ Chuyên môn</Label>
               <Select>
                 <SelectTrigger className="form-input">

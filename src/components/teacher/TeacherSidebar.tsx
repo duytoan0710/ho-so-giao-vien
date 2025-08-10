@@ -39,32 +39,32 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
   };
 
   return (
-    <div className="sidebar p-6 flex flex-col">
+    <div className="sidebar p-6 flex flex-col h-screen">
       {/* Back Button */}
       <button
         onClick={handleBackToList}
-        className="flex items-center text-text-secondary hover:text-education-primary mb-8 transition-colors duration-200"
+        className="flex items-center text-muted-foreground hover:text-primary mb-8 transition-colors duration-200 font-medium"
       >
-        <ArrowLeft className="w-4 h-4 mr-2" />
+        <ArrowLeft className="w-5 h-5 mr-2" />
         Trở về danh sách
       </button>
 
       {/* Teacher Info */}
       <div className="mb-8 text-center">
-        <Avatar className="w-20 h-20 mx-auto mb-4">
+        <Avatar className="w-24 h-24 mx-auto mb-4 border-2 border-border">
           <AvatarImage src={teacher.avatar} alt={teacher.name} />
-          <AvatarFallback className="bg-education-light text-education-primary text-lg font-semibold">
+          <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
             {teacher.name.split(' ').pop()?.charAt(0)}
           </AvatarFallback>
         </Avatar>
-        <h2 className="text-lg font-semibold text-text-primary mb-1">{teacher.name}</h2>
-        <p className="text-sm text-text-muted mb-1">{teacher.code}</p>
-        <p className="text-sm text-text-secondary">{teacher.position}</p>
-        <p className="text-sm text-text-secondary">{teacher.department}</p>
+        <h2 className="text-xl font-bold text-foreground mb-2">{teacher.name}</h2>
+        <p className="text-sm text-primary font-semibold mb-1">{teacher.code}</p>
+        <p className="text-sm text-muted-foreground font-medium">{teacher.position}</p>
+        <p className="text-sm text-muted-foreground font-medium">{teacher.department}</p>
       </div>
 
       {/* Navigation Menu */}
-      <nav className="space-y-2">
+      <nav className="space-y-2 flex-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeSection === item.id;
@@ -75,8 +75,8 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
               onClick={() => onSectionChange(item.id)}
               className={`nav-item w-full text-left ${isActive ? 'active' : ''}`}
             >
-              <Icon className="w-4 h-4 mr-3" />
-              <span className="text-sm">{item.title}</span>
+              <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
+              <span className="text-sm font-medium">{item.title}</span>
             </button>
           );
         })}

@@ -66,17 +66,6 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom semantic colors for teacher management
-				'surface-primary': 'hsl(var(--surface-primary))',
-				'surface-secondary': 'hsl(var(--surface-secondary))',
-				'text-primary': 'hsl(var(--text-primary))',
-				'text-secondary': 'hsl(var(--text-secondary))',
-				'text-muted': 'hsl(var(--text-muted))',
-				'education-primary': 'hsl(var(--education-primary))',
-				'education-light': 'hsl(var(--education-light))',
-				'status-success': 'hsl(var(--status-success))',
-				'status-warning': 'hsl(var(--status-warning))',
-				'status-error': 'hsl(var(--status-error))',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
