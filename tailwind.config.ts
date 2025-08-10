@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -18,6 +19,9 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -61,7 +65,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Custom semantic colors for teacher management
+				'surface-primary': 'hsl(var(--surface-primary))',
+				'surface-secondary': 'hsl(var(--surface-secondary))',
+				'text-primary': 'hsl(var(--text-primary))',
+				'text-secondary': 'hsl(var(--text-secondary))',
+				'text-muted': 'hsl(var(--text-muted))',
+				'education-primary': 'hsl(var(--education-primary))',
+				'education-light': 'hsl(var(--education-light))',
+				'status-success': 'hsl(var(--status-success))',
+				'status-warning': 'hsl(var(--status-warning))',
+				'status-error': 'hsl(var(--status-error))',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +99,36 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'slide-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(-4px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0'
+					},
+					'100%': {
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-down': 'accordion-down 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+				'accordion-up': 'accordion-up 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+				'slide-in': 'slide-in 0.3s ease-out',
+				'fade-in': 'fade-in 0.2s ease-out'
+			},
+			spacing: {
+				'content': '1.5rem',
+				'section': '2rem',
+				'page': '2.5rem'
 			}
 		}
 	},
