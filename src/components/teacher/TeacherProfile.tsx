@@ -1,15 +1,17 @@
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { BookOpen } from 'lucide-react';
 import TeacherSidebar from './TeacherSidebar';
 import ProfileContent from './profile/ProfileContent';
 import QualificationsContent from './qualifications/QualificationsContent';
 import ContractsContent from './contracts/ContractsContent';
-import AssignmentsContent from './assignments/AssignmentsContent';
 import EvaluationsContent from './evaluations/EvaluationsContent';
 
 const TeacherProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = React.useState('profile');
 
   // Mock teacher data
@@ -31,7 +33,26 @@ const TeacherProfile = () => {
       case 'contracts':
         return <ContractsContent teacher={teacher} />;
       case 'assignments':
-        return <AssignmentsContent teacher={teacher} />;
+        return (
+          <div className="animate-fade-in">
+            <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+              <BookOpen className="w-16 h-16 text-muted-foreground mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Quản lý Phân công Giảng dạy
+              </h2>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                Phân công giảng dạy đã được chuyển sang trang riêng để quản lý tập trung và hiệu quả hơn.
+              </p>
+              <Button 
+                onClick={() => navigate('/assignments')}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Đi đến Quản lý Phân công
+              </Button>
+            </div>
+          </div>
+        );
       case 'evaluations':
         return <EvaluationsContent teacher={teacher} />;
       default:
