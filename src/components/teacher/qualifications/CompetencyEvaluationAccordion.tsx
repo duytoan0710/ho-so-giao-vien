@@ -50,13 +50,13 @@ const CompetencyEvaluationAccordion = () => {
 
   const deleteEvaluation = (id: string) => {
     if (evaluations.length > 1) {
-      setEvaluations(evaluations.filter(eval => eval.id !== id));
+      setEvaluations(evaluations.filter(evaluation => evaluation.id !== id));
     }
   };
 
   const updateEvaluation = (id: string, field: string, value: any) => {
-    setEvaluations(evaluations.map(eval => 
-      eval.id === id ? { ...eval, [field]: value } : eval
+    setEvaluations(evaluations.map(evaluation => 
+      evaluation.id === id ? { ...evaluation, [field]: value } : evaluation
     ));
   };
 
