@@ -2,11 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
-import TrainingSpecialtyAccordion from './TrainingSpecialtyAccordion';
-import LanguageCertificatesAccordion from './LanguageCertificatesAccordion';
-import ITCertificatesAccordion from './ITCertificatesAccordion';
-import CompetencyEvaluationAccordion from './CompetencyEvaluationAccordion';
-import SalaryAccordion from './SalaryAccordion';
+import AssessmentAccordion from './assessment/AssessmentAccordion';
 
 interface Teacher {
   id: string;
@@ -17,19 +13,19 @@ interface Teacher {
   department: string;
 }
 
-interface QualificationsContentProps {
+interface EvaluationAssessmentContentProps {
   teacher: Teacher;
 }
 
-const QualificationsContent: React.FC<QualificationsContentProps> = ({ teacher }) => {
+const EvaluationAssessmentContent: React.FC<EvaluationAssessmentContentProps> = ({ teacher }) => {
   const handleSave = () => {
-    console.log('Saving qualifications data...');
+    console.log('Saving evaluation and assessment data...');
   };
 
   return (
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Phụ cấp</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Đánh giá, phân loại</h1>
         <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
           <Save className="w-4 h-4 mr-2" />
           Lưu thay đổi
@@ -37,10 +33,10 @@ const QualificationsContent: React.FC<QualificationsContentProps> = ({ teacher }
       </div>
 
       <div className="space-y-6">
-        <SalaryAccordion />
+        <AssessmentAccordion />
       </div>
     </div>
   );
 };
 
-export default QualificationsContent;
+export default EvaluationAssessmentContent;

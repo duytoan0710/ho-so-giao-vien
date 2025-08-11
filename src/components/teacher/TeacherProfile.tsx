@@ -8,6 +8,8 @@ import ProfileContent from './profile/ProfileContent';
 import QualificationsContent from './qualifications/QualificationsContent';
 import ContractsContent from './contracts/ContractsContent';
 import EvaluationsContent from './evaluations/EvaluationsContent';
+import TrainingEducationContent from './TrainingEducationContent';
+import EvaluationAssessmentContent from './EvaluationAssessmentContent';
 
 const TeacherProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +32,10 @@ const TeacherProfile = () => {
         return <ProfileContent teacher={teacher} />;
       case 'qualifications':
         return <QualificationsContent teacher={teacher} />;
+      case 'training':
+        return <TrainingEducationContent teacher={teacher} />;
+      case 'evaluation':
+        return <EvaluationAssessmentContent teacher={teacher} />;
       case 'contracts':
         return <ContractsContent teacher={teacher} />;
       case 'assignments':
