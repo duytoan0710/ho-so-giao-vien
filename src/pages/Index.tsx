@@ -79,8 +79,8 @@ const mockTeachers: Teacher[] = [
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedClass, setSelectedClass] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [filteredTeachers, setFilteredTeachers] = useState(mockTeachers);
   const navigate = useNavigate();
 
@@ -93,8 +93,8 @@ const Index = () => {
     let filtered = mockTeachers.filter(teacher => {
       const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase()) ||
                            teacher.code.toLowerCase().includes(search.toLowerCase());
-      const matchesClass = !classFilter || teacher.homeroom === classFilter;
-      const matchesStatus = !statusFilter || teacher.status === statusFilter;
+      const matchesClass = classFilter === 'all' || teacher.homeroom === classFilter;
+      const matchesStatus = statusFilter === 'all' || teacher.status === statusFilter;
       
       return matchesSearch && matchesClass && matchesStatus;
     });
@@ -192,7 +192,7 @@ const Index = () => {
                 <SelectValue placeholder="Chọn lớp" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tất cả lớp</SelectItem>
+                <SelectItem value="all">Tất cả lớp</SelectItem>
                 <SelectItem value="10A1">10A1</SelectItem>
                 <SelectItem value="10A2">10A2</SelectItem>
                 <SelectItem value="10B1">10B1</SelectItem>
@@ -206,7 +206,7 @@ const Index = () => {
                 <SelectValue placeholder="Chọn trạng thái" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tất cả trạng thái</SelectItem>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="active">Đang làm việc</SelectItem>
                 <SelectItem value="pending">Chưa xếp lớp</SelectItem>
                 <SelectItem value="inactive">Nghỉ việc</SelectItem>
