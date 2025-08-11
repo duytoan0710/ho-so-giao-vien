@@ -12,10 +12,10 @@ interface Teacher {
   name: string;
   code: string;
   position: string;
-  subjects: string[];
+  subject: string;
   homeroom: string;
-  assignments: string;
-  status: 'active' | 'inactive' | 'pending';
+  assignedClasses: string[];
+  status: 'active' | 'inactive';
   initials: string;
 }
 
@@ -23,56 +23,56 @@ const mockTeachers: Teacher[] = [
   {
     id: '1',
     name: 'Nguyễn Văn An',
-    code: 'GV001',
-    position: 'Giáo viên chính',
-    subjects: ['Toán', 'Tin học'],
+    code: 'GV001234567890',
+    position: 'Giáo viên',
+    subject: 'Toán',
     homeroom: '10A1',
-    assignments: '18 tiết/tuần',
+    assignedClasses: ['10A1', '10A2', '10B1'],
     status: 'active',
     initials: 'NV'
   },
   {
     id: '2',
     name: 'Trần Thị Bình',
-    code: 'GV002',
-    position: 'Giáo viên',
-    subjects: ['Văn', 'Sử'],
+    code: 'GV002345678901',
+    position: 'Tổ trưởng tổ chuyên môn',
+    subject: 'Ngữ văn',
     homeroom: '10A2',
-    assignments: '20 tiết/tuần',
+    assignedClasses: ['10A2', '10A3', '10B2'],
     status: 'active',
     initials: 'TT'
   },
   {
     id: '3',
     name: 'Lê Minh Cường',
-    code: 'GV003',
-    position: 'Tổ trưởng',
-    subjects: ['Lý', 'Hóa'],
-    homeroom: '—',
-    assignments: '16 tiết/tuần',
+    code: 'GV003456789012',
+    position: 'Tổ trưởng tổ chuyên môn',
+    subject: 'Vật lý',
+    homeroom: '10B1',
+    assignedClasses: ['10B1', '10B2', '10C1'],
     status: 'active',
     initials: 'LM'
   },
   {
     id: '4',
     name: 'Phạm Thu Diệu',
-    code: 'GV004',
+    code: 'GV004567890123',
     position: 'Giáo viên',
-    subjects: ['Tiếng Anh'],
-    homeroom: '—',
-    assignments: 'Chưa xếp lớp',
-    status: 'pending',
+    subject: 'Tiếng Anh',
+    homeroom: '10A3',
+    assignedClasses: ['10A3', '10C1', '10C2'],
+    status: 'active',
     initials: 'PT'
   },
   {
     id: '5',
     name: 'Hoàng Đức Minh',
-    code: 'GV005',
+    code: 'GV005678901234',
     position: 'Giáo viên',
-    subjects: ['Thể dục'],
-    homeroom: '10B1',
-    assignments: '22 tiết/tuần',
-    status: 'active',
+    subject: 'Thể dục',
+    homeroom: '',
+    assignedClasses: ['10A1', '10A2', '10A3', '10B1', '10B2'],
+    status: 'inactive',
     initials: 'HD'
   }
 ];
@@ -93,7 +93,7 @@ const Index = () => {
     let filtered = mockTeachers.filter(teacher => {
       const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase()) ||
                            teacher.code.toLowerCase().includes(search.toLowerCase());
-      const matchesClass = classFilter === 'all' || teacher.homeroom === classFilter;
+      const matchesClass = classFilter === 'all' || teacher.homeroom === classFilter || teacher.assignedClasses.includes(classFilter);
       const matchesStatus = statusFilter === 'all' || teacher.status === statusFilter;
       
       return matchesSearch && matchesClass && matchesStatus;
@@ -104,11 +104,9 @@ const Index = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Đang học</Badge>;
-      case 'pending':
-        return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">Chưa xếp lớp</Badge>;
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Đang làm việc</Badge>;
       case 'inactive':
-        return <Badge variant="secondary">Nghỉ việc</Badge>;
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Đã nghỉ việc</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -154,7 +152,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold text-foreground">Danh sách Giáo viên</h1>
               <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
                 <Users className="w-4 h-4 mr-2" />
-                Xếp lớp & Phân công
+                Phân công giảng dạy
               </Button>
             </div>
             <div className="flex items-center gap-3">
@@ -195,7 +193,11 @@ const Index = () => {
                 <SelectItem value="all">Tất cả lớp</SelectItem>
                 <SelectItem value="10A1">10A1</SelectItem>
                 <SelectItem value="10A2">10A2</SelectItem>
+                <SelectItem value="10A3">10A3</SelectItem>
                 <SelectItem value="10B1">10B1</SelectItem>
+                <SelectItem value="10B2">10B2</SelectItem>
+                <SelectItem value="10C1">10C1</SelectItem>
+                <SelectItem value="10C2">10C2</SelectItem>
               </SelectContent>
             </Select>
             <Select value={selectedStatus} onValueChange={(value) => {
@@ -208,8 +210,7 @@ const Index = () => {
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="active">Đang làm việc</SelectItem>
-                <SelectItem value="pending">Chưa xếp lớp</SelectItem>
-                <SelectItem value="inactive">Nghỉ việc</SelectItem>
+                <SelectItem value="inactive">Đã nghỉ việc</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -242,9 +243,19 @@ const Index = () => {
                     </td>
                     <td className="py-4 px-4 text-sm text-muted-foreground font-mono">{teacher.code}</td>
                     <td className="py-4 px-4 text-sm text-muted-foreground">{teacher.position}</td>
-                    <td className="py-4 px-4 text-sm text-muted-foreground">{teacher.subjects.join(', ')}</td>
-                    <td className="py-4 px-4 text-sm text-muted-foreground">{teacher.homeroom}</td>
-                    <td className="py-4 px-4 text-sm text-muted-foreground">{teacher.assignments}</td>
+                    <td className="py-4 px-4 text-sm text-muted-foreground">{teacher.subject}</td>
+                    <td className="py-4 px-4 text-sm text-muted-foreground">
+                      {teacher.homeroom || '—'}
+                    </td>
+                    <td className="py-4 px-4 text-sm text-muted-foreground">
+                      <div className="flex flex-wrap gap-1">
+                        {teacher.assignedClasses.map((className, index) => (
+                          <span key={index} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                            {className}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
                     <td className="py-4 px-4">
                       {getStatusBadge(teacher.status)}
                     </td>
@@ -256,7 +267,7 @@ const Index = () => {
                         className="text-blue-600 hover:bg-blue-50"
                       >
                         <Eye className="w-4 h-4 mr-1" />
-                        Xem chi tiết
+                        Phân công giảng dạy
                       </Button>
                     </td>
                   </tr>
