@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { Calendar, Users, Plus, Download, Upload, Search, Filter, Eye, ChevronDown } from 'lucide-react';
+import { Calendar, Users, Plus, Download, Upload, Search, Filter, Eye, ChevronDown, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 
 interface Teacher {
@@ -116,6 +117,24 @@ const Index = () => {
     navigate(`/teacher/${teacherId}`);
   };
 
+  const handleAssignmentManagement = () => {
+    navigate('/assignments');
+  };
+
+  const handleViewTeacher = (teacherId: string) => {
+    navigate(`/teacher/${teacherId}`);
+  };
+
+  const handleEditTeacher = (teacherId: string) => {
+    console.log('Edit teacher:', teacherId);
+    // TODO: Implement edit functionality
+  };
+
+  const handleDeleteTeacher = (teacherId: string) => {
+    console.log('Delete teacher:', teacherId);
+    // TODO: Implement delete functionality
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
@@ -150,7 +169,12 @@ const Index = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-foreground">Danh sách Giáo viên</h1>
-              <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                onClick={handleAssignmentManagement}
+              >
                 <Users className="w-4 h-4 mr-2" />
                 Phân công giảng dạy
               </Button>
@@ -260,15 +284,34 @@ const Index = () => {
                       {getStatusBadge(teacher.status)}
                     </td>
                     <td className="py-4 px-4 text-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTeacherClick(teacher.id)}
-                        className="text-blue-600 hover:bg-blue-50"
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Phân công giảng dạy
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => handleViewTeacher(teacher.id)}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Xem chi tiết
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditTeacher(teacher.id)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteTeacher(teacher.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Xóa
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
