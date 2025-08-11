@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Save, User } from 'lucide-react';
+import { Save } from 'lucide-react';
 import PersonalInfoAccordion from './PersonalInfoAccordion';
 import PartyInfoAccordion from './PartyInfoAccordion';
 import PositionInfoAccordion from './PositionInfoAccordion';
@@ -23,26 +23,21 @@ interface ProfileContentProps {
 const ProfileContent: React.FC<ProfileContentProps> = ({ teacher }) => {
   const handleSave = () => {
     console.log('Saving profile data...');
+    // Implementation for saving data
   };
 
   return (
     <div className="animate-fade-in">
+      {/* Header */}
       <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-            <User className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Hồ sơ cá nhân</h1>
-            <p className="text-sm text-muted-foreground">Quản lý thông tin cơ bản và vị trí công tác</p>
-          </div>
-        </div>
-        <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+        <h1 className="page-title">Hồ sơ Cá nhân & Vị trí công tác</h1>
+        <Button onClick={handleSave} className="btn-primary">
           <Save className="w-4 h-4 mr-2" />
           Lưu thay đổi
         </Button>
       </div>
 
+      {/* Accordion Sections */}
       <div className="space-y-6">
         <PersonalInfoAccordion />
         <PartyInfoAccordion />

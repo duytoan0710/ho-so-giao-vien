@@ -8,8 +8,6 @@ import ProfileContent from './profile/ProfileContent';
 import QualificationsContent from './qualifications/QualificationsContent';
 import ContractsContent from './contracts/ContractsContent';
 import EvaluationsContent from './evaluations/EvaluationsContent';
-import TrainingContent from './training/TrainingContent';
-import EvaluationContent from './evaluation/EvaluationContent';
 
 const TeacherProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,19 +30,13 @@ const TeacherProfile = () => {
         return <ProfileContent teacher={teacher} />;
       case 'qualifications':
         return <QualificationsContent teacher={teacher} />;
-      case 'training':
-        return <TrainingContent teacher={teacher} />;
-      case 'evaluation':
-        return <EvaluationContent teacher={teacher} />;
       case 'contracts':
         return <ContractsContent teacher={teacher} />;
       case 'assignments':
         return (
           <div className="animate-fade-in">
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                <BookOpen className="w-8 h-8 text-blue-600" />
-              </div>
+              <BookOpen className="w-16 h-16 text-muted-foreground mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Quản lý Phân công Giảng dạy
               </h2>
@@ -61,6 +53,8 @@ const TeacherProfile = () => {
             </div>
           </div>
         );
+      case 'evaluations':
+        return <EvaluationsContent teacher={teacher} />;
       default:
         return <ProfileContent teacher={teacher} />;
     }
