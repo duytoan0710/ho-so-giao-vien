@@ -72,7 +72,7 @@
   }
 
   .form-label {
-    @apply text-sm font-medium text-foreground mb-2 block;
+    @apply text-sm font-medium text-foreground mb-3 block leading-5;
   }
 
   .form-input {
@@ -138,7 +138,7 @@
   }
 
   .form-group {
-    @apply space-y-2;
+    @apply space-y-3;
   }
 
   .teacher-profile-layout {
