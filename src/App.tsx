@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import TeacherProfile from "./components/teacher/TeacherProfile";
 import AssignmentManagement from "./pages/AssignmentManagement";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/teacher/:id" element={<TeacherProfile />} />
           <Route path="/assignments" element={<AssignmentManagement />} />
+          <Route path="/analytics" element={<AnalyticsDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

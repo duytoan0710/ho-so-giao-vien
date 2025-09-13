@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Calendar, Users, Plus, Download, Upload, Search, Filter, Eye, ChevronDown, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Users, Plus, Download, Upload, Search, Filter, Eye, ChevronDown, MoreHorizontal, Edit, Trash2, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -82,22 +82,24 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedSubject, setSelectedSubject] = useState('all');
   const [filteredTeachers, setFilteredTeachers] = useState(mockTeachers);
   const navigate = useNavigate();
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    filterTeachers(value, selectedClass, selectedStatus);
+    filterTeachers(value, selectedClass, selectedStatus, selectedSubject);
   };
 
-  const filterTeachers = (search: string, classFilter: string, statusFilter: string) => {
+  const filterTeachers = (search: string, classFilter: string, statusFilter: string, subjectFilter: string) => {
     let filtered = mockTeachers.filter(teacher => {
       const matchesSearch = teacher.name.toLowerCase().includes(search.toLowerCase()) ||
                            teacher.code.toLowerCase().includes(search.toLowerCase());
       const matchesClass = classFilter === 'all' || teacher.homeroom === classFilter || teacher.assignedClasses.includes(classFilter);
       const matchesStatus = statusFilter === 'all' || teacher.status === statusFilter;
+      const matchesSubject = subjectFilter === 'all' || teacher.subject === subjectFilter;
       
-      return matchesSearch && matchesClass && matchesStatus;
+      return matchesSearch && matchesClass && matchesStatus && matchesSubject;
     });
     setFilteredTeachers(filtered);
   };
@@ -119,6 +121,10 @@ const Index = () => {
 
   const handleAssignmentManagement = () => {
     navigate('/assignments');
+  };
+
+  const handleAnalyticsDashboard = () => {
+    navigate('/analytics');
   };
 
   const handleViewTeacher = (teacherId: string) => {
@@ -180,6 +186,15 @@ const Index = () => {
               </Button>
             </div>
             <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                onClick={handleAnalyticsDashboard}
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Phân tích Tổng quan
+              </Button>
               <Button variant="outline" size="sm">
                 <Upload className="w-4 h-4 mr-2" />
                 Import từ Excel
@@ -206,9 +221,30 @@ const Index = () => {
                 className="pl-10"
               />
             </div>
+            <Select value={selectedSubject} onValueChange={(value) => {
+              setSelectedSubject(value);
+              filterTeachers(searchTerm, selectedClass, selectedStatus, value);
+            }}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Chọn bộ môn" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả bộ môn</SelectItem>
+                <SelectItem value="Toán">Toán</SelectItem>
+                <SelectItem value="Ngữ văn">Ngữ văn</SelectItem>
+                <SelectItem value="Vật lý">Vật lý</SelectItem>
+                <SelectItem value="Hóa học">Hóa học</SelectItem>
+                <SelectItem value="Sinh học">Sinh học</SelectItem>
+                <SelectItem value="Tiếng Anh">Tiếng Anh</SelectItem>
+                <SelectItem value="Lịch sử">Lịch sử</SelectItem>
+                <SelectItem value="Địa lý">Địa lý</SelectItem>
+                <SelectItem value="Thể dục">Thể dục</SelectItem>
+                <SelectItem value="Tin học">Tin học</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={selectedClass} onValueChange={(value) => {
               setSelectedClass(value);
-              filterTeachers(searchTerm, value, selectedStatus);
+              filterTeachers(searchTerm, value, selectedStatus, selectedSubject);
             }}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Chọn lớp" />
@@ -226,7 +262,7 @@ const Index = () => {
             </Select>
             <Select value={selectedStatus} onValueChange={(value) => {
               setSelectedStatus(value);
-              filterTeachers(searchTerm, selectedClass, value);
+              filterTeachers(searchTerm, selectedClass, value, selectedSubject);
             }}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Chọn trạng thái" />
