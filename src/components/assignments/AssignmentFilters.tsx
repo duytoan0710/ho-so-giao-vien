@@ -12,8 +12,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AddAssignmentModal from './AddAssignmentModal';
 
 const AssignmentFilters = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     academicYear: '',
     campus: '',
@@ -38,6 +40,12 @@ const AssignmentFilters = () => {
     });
   };
 
+  const handleAddAssignment = (data: any) => {
+    console.log('New assignment data:', data);
+    // Here you would typically call your API to save the data
+    // and then refresh the table data
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -51,7 +59,7 @@ const AssignmentFilters = () => {
               <Download className="w-4 h-4 mr-2" />
               Xuất Excel
             </Button>
-            <Button size="sm">
+            <Button size="sm" onClick={() => setIsModalOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Thêm phân công
             </Button>
@@ -158,6 +166,12 @@ const AssignmentFilters = () => {
           </Button>
         </div>
       </CardContent>
+
+      <AddAssignmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleAddAssignment}
+      />
     </Card>
   );
 };
