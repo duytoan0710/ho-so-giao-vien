@@ -35,6 +35,12 @@ const AssignmentManagement = () => {
               Quản lý Phân công Giảng dạy
             </h1>
           </div>
+          <Button 
+            onClick={() => navigate('/bulk-assignment')}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Phân công Hàng loạt
+          </Button>
         </div>
 
         {/* Tabs */}
