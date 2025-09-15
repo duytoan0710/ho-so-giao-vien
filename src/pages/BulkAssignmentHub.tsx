@@ -178,7 +178,7 @@ const BulkAssignmentHub = () => {
     
     if (campus) {
       const campusPrefix = campus === 'main' ? 'A' : campus === 'branch1' ? 'B' : 'C';
-      const grades = gradeLevel ? [parseInt(gradeLevel)] : [6, 7, 8, 9];
+      const grades = gradeLevel && gradeLevel !== 'all' ? [parseInt(gradeLevel)] : [6, 7, 8, 9];
       
       grades.forEach(grade => {
         for (let classNum = 1; classNum <= 2; classNum++) {
@@ -358,7 +358,7 @@ const BulkAssignmentHub = () => {
                       <SelectValue placeholder="Tất cả" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Tất cả</SelectItem>
+                      <SelectItem value="all">Tất cả</SelectItem>
                       <SelectItem value="6">Khối 6</SelectItem>
                       <SelectItem value="7">Khối 7</SelectItem>
                       <SelectItem value="8">Khối 8</SelectItem>
