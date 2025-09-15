@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, Users, BookOpen, AlertTriangle, CheckCircle, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Search, Users, BookOpen, AlertTriangle, CheckCircle, Lightbulb, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -110,6 +110,7 @@ const BulkAssignmentHub = () => {
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [classSearch, setClassSearch] = useState('');
+  const [teacherSearch, setTeacherSearch] = useState('');
   const [teacherSearches, setTeacherSearches] = useState<Record<string, string>>({});
 
   // Mock data initialization
@@ -213,6 +214,11 @@ const BulkAssignmentHub = () => {
 
   const filteredClasses = classes.filter(cls =>
     cls.name.toLowerCase().includes(classSearch.toLowerCase())
+  );
+
+  const filteredTeachers = teachers.filter(teacher =>
+    teacher.name.toLowerCase().includes(teacherSearch.toLowerCase()) ||
+    teacher.code.toLowerCase().includes(teacherSearch.toLowerCase())
   );
 
   const getTeacherSuggestions = (subjectName: string) => {
@@ -455,9 +461,73 @@ const BulkAssignmentHub = () => {
               </TabsContent>
 
               <TabsContent value="teacher">
-                <div className="text-center text-muted-foreground py-8">
-                  <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>Chế độ xem theo giáo viên sẽ được phát triển trong phiên bản tới</p>
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Input
+                      placeholder="Tìm kiếm giáo viên..."
+                      value={teacherSearch}
+                      onChange={(e) => setTeacherSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+
+                  <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto">
+                    {filteredTeachers.map((teacher) => (
+                      <Card
+                        key={teacher.id}
+                        className={`cursor-pointer transition-all hover:shadow-sm ${
+                          selectedTeacher?.id === teacher.id ? 'ring-2 ring-primary' : ''
+                        }`}
+                        onClick={() => setSelectedTeacher(teacher)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={teacher.avatar} />
+                              <AvatarFallback>
+                                {teacher.name.split(' ').pop()?.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <h3 className="font-medium">{teacher.name}</h3>
+                              <p className="text-sm text-muted-foreground">{teacher.code}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className={`w-3 h-3 rounded-full ${
+                                teacher.currentLoad / teacher.maxLoad < 0.8 ? 'bg-green-500' : 
+                                teacher.currentLoad / teacher.maxLoad < 0.95 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`} />
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                Tải trọng: {teacher.currentLoad}/{teacher.maxLoad} tiết
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {Math.round((teacher.currentLoad / teacher.maxLoad) * 100)}%
+                              </span>
+                            </div>
+                            
+                            <Progress 
+                              value={(teacher.currentLoad / teacher.maxLoad) * 100}
+                              className="h-2"
+                            />
+                            
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {teacher.qualifiedSubjects.map((subject, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
+                                  {subject}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
@@ -466,171 +536,203 @@ const BulkAssignmentHub = () => {
 
         {/* Workspace */}
         <div className="flex-1 p-6 overflow-y-auto">
-          {selectedClass ? (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">
-                  Phân công cho lớp {selectedClass.name}
-                </h2>
-                <Badge variant="outline" className="text-sm">
-                  {selectedClass.assignedSubjects}/{selectedClass.totalSubjects} môn đã phân công
-                </Badge>
-              </div>
+          {groupingMode === 'class' ? (
+            selectedClass ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-semibold">
+                    Phân công cho lớp {selectedClass.name}
+                  </h2>
+                  <Badge variant="outline" className="text-sm">
+                    {selectedClass.assignedSubjects}/{selectedClass.totalSubjects} môn đã phân công
+                  </Badge>
+                </div>
 
-              {/* Homeroom Teacher Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <Users className="w-5 h-5 mr-2" />
-                    Giáo viên Chủ nhiệm
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center space-x-4">
-                    {selectedClass.homeroomTeacher ? (
-                      <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <Avatar>
-                          <AvatarImage src={selectedClass.homeroomTeacher.avatar} />
-                          <AvatarFallback>
-                            {selectedClass.homeroomTeacher.name.split(' ').pop()?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{selectedClass.homeroomTeacher.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {selectedClass.homeroomTeacher.code} • {selectedClass.homeroomTeacher.currentLoad}/{selectedClass.homeroomTeacher.maxLoad} tiết
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => assignHomeroomTeacher(selectedClass.id, '')}
-                        >
-                          Thay đổi
-                        </Button>
-                      </div>
-                    ) : (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-64 justify-start">
-                            <Search className="w-4 h-4 mr-2" />
-                            Chọn giáo viên chủ nhiệm...
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80" align="start">
-                          <Command>
-                            <CommandInput placeholder="Tìm kiếm giáo viên..." />
-                            <CommandList>
-                              <CommandEmpty>Không tìm thấy giáo viên.</CommandEmpty>
-                              <CommandGroup>
-                                {teachers.map((teacher) => (
-                                  <CommandItem
-                                    key={teacher.id}
-                                    onSelect={() => assignHomeroomTeacher(selectedClass.id, teacher.id)}
-                                  >
-                                    <div className="flex items-center space-x-3 w-full">
-                                      <Avatar className="w-8 h-8">
-                                        <AvatarImage src={teacher.avatar} />
-                                        <AvatarFallback>
-                                          {teacher.name.split(' ').pop()?.charAt(0)}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <div className="flex-1">
-                                        <p className="font-medium">{teacher.name}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                          {teacher.code} • {teacher.currentLoad}/{teacher.maxLoad} tiết
-                                        </p>
-                                      </div>
-                                      <div className="text-xs">
-                                        <div className={`w-2 h-2 rounded-full ${
-                                          teacher.currentLoad / teacher.maxLoad < 0.8 ? 'bg-green-500' : 
-                                          teacher.currentLoad / teacher.maxLoad < 0.95 ? 'bg-yellow-500' : 'bg-red-500'
-                                        }`} />
-                                      </div>
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Subject Assignments */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    Phân công Môn học
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {selectedClass.subjects.map((subject) => (
-                      <div
-                        key={subject.id}
-                        className="grid grid-cols-12 gap-4 items-center p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                      >
-                        <div className="col-span-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">{subject.name}</span>
-                            {subject.isRequired && (
-                              <Badge variant="secondary" className="text-xs">Bắt buộc</Badge>
-                            )}
+                {/* Homeroom Teacher Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <Users className="w-5 h-5 mr-2" />
+                      Giáo viên Chủ nhiệm
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center space-x-4">
+                      {selectedClass.homeroomTeacher ? (
+                        <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                          <Avatar>
+                            <AvatarImage src={selectedClass.homeroomTeacher.avatar} />
+                            <AvatarFallback>
+                              {selectedClass.homeroomTeacher.name.split(' ').pop()?.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{selectedClass.homeroomTeacher.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {selectedClass.homeroomTeacher.code} • {selectedClass.homeroomTeacher.currentLoad}/{selectedClass.homeroomTeacher.maxLoad} tiết
+                            </p>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => assignHomeroomTeacher(selectedClass.id, '')}
+                          >
+                            Thay đổi
+                          </Button>
                         </div>
+                      ) : (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-64 justify-start">
+                              <Search className="w-4 h-4 mr-2" />
+                              Chọn giáo viên chủ nhiệm...
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80" align="start">
+                            <Command>
+                              <CommandInput placeholder="Tìm kiếm giáo viên..." />
+                              <CommandList>
+                                <CommandEmpty>Không tìm thấy giáo viên.</CommandEmpty>
+                                <CommandGroup>
+                                  {teachers.map((teacher) => (
+                                    <CommandItem
+                                      key={teacher.id}
+                                      onSelect={() => assignHomeroomTeacher(selectedClass.id, teacher.id)}
+                                    >
+                                      <div className="flex items-center space-x-3 w-full">
+                                        <Avatar className="w-8 h-8">
+                                          <AvatarImage src={teacher.avatar} />
+                                          <AvatarFallback>
+                                            {teacher.name.split(' ').pop()?.charAt(0)}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1">
+                                          <p className="font-medium">{teacher.name}</p>
+                                          <p className="text-sm text-muted-foreground">
+                                            {teacher.code} • {teacher.currentLoad}/{teacher.maxLoad} tiết
+                                          </p>
+                                        </div>
+                                        <div className="text-xs">
+                                          <div className={`w-2 h-2 rounded-full ${
+                                            teacher.currentLoad / teacher.maxLoad < 0.8 ? 'bg-green-500' : 
+                                            teacher.currentLoad / teacher.maxLoad < 0.95 ? 'bg-yellow-500' : 'bg-red-500'
+                                          }`} />
+                                        </div>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
 
-                        <div className="col-span-6">
-                          {subject.assignedTeacher ? (
-                            <div className="flex items-center space-x-3 p-2 bg-green-50 rounded border border-green-200">
-                              <Avatar className="w-8 h-8">
-                                <AvatarImage src={subject.assignedTeacher.avatar} />
-                                <AvatarFallback>
-                                  {subject.assignedTeacher.name.split(' ').pop()?.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <p className="font-medium text-sm">{subject.assignedTeacher.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {subject.assignedTeacher.code} • {subject.assignedTeacher.currentLoad}/{subject.assignedTeacher.maxLoad} tiết
-                                </p>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => assignTeacherToSubject(selectedClass.id, subject.id, '')}
-                              >
-                                Thay đổi
-                              </Button>
+                {/* Subject Assignments */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      Phân công Môn học
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {selectedClass.subjects.map((subject) => (
+                        <div
+                          key={subject.id}
+                          className="grid grid-cols-12 gap-4 items-center p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="col-span-3">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">{subject.name}</span>
+                              {subject.isRequired && (
+                                <Badge variant="secondary" className="text-xs">Bắt buộc</Badge>
+                              )}
                             </div>
-                          ) : (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start">
-                                  <Search className="w-4 h-4 mr-2" />
-                                  Chọn giáo viên...
+                          </div>
+
+                          <div className="col-span-6">
+                            {subject.assignedTeacher ? (
+                              <div className="flex items-center space-x-3 p-2 bg-green-50 rounded border border-green-200">
+                                <Avatar className="w-8 h-8">
+                                  <AvatarImage src={subject.assignedTeacher.avatar} />
+                                  <AvatarFallback>
+                                    {subject.assignedTeacher.name.split(' ').pop()?.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm">{subject.assignedTeacher.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {subject.assignedTeacher.code} • {subject.assignedTeacher.currentLoad}/{subject.assignedTeacher.maxLoad} tiết
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => assignTeacherToSubject(selectedClass.id, subject.id, '')}
+                                >
+                                  Thay đổi
                                 </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-80" align="start">
-                                <Command>
-                                  <CommandInput placeholder="Tìm kiếm giáo viên..." />
-                                  <CommandList>
-                                    <CommandEmpty>Không tìm thấy giáo viên.</CommandEmpty>
-                                    
-                                    {/* Smart suggestions */}
-                                    {getTeacherSuggestions(subject.name).length > 0 && (
-                                      <CommandGroup heading="Gợi ý phù hợp">
-                                        {getTeacherSuggestions(subject.name).map((teacher) => (
+                              </div>
+                            ) : (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className="w-full justify-start">
+                                    <Search className="w-4 h-4 mr-2" />
+                                    Chọn giáo viên...
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80" align="start">
+                                  <Command>
+                                    <CommandInput placeholder="Tìm kiếm giáo viên..." />
+                                    <CommandList>
+                                      <CommandEmpty>Không tìm thấy giáo viên.</CommandEmpty>
+                                      
+                                      {/* Smart suggestions */}
+                                      {getTeacherSuggestions(subject.name).length > 0 && (
+                                        <CommandGroup heading="Gợi ý phù hợp">
+                                          {getTeacherSuggestions(subject.name).map((teacher) => (
+                                            <CommandItem
+                                              key={teacher.id}
+                                              onSelect={() => assignTeacherToSubject(selectedClass.id, subject.id, teacher.id)}
+                                            >
+                                              <div className="flex items-center space-x-3 w-full">
+                                                <Lightbulb className="w-4 h-4 text-amber-500" />
+                                                <Avatar className="w-8 h-8">
+                                                  <AvatarImage src={teacher.avatar} />
+                                                  <AvatarFallback>
+                                                    {teacher.name.split(' ').pop()?.charAt(0)}
+                                                  </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1">
+                                                  <p className="font-medium">{teacher.name}</p>
+                                                  <p className="text-sm text-muted-foreground">
+                                                    {teacher.code} • {teacher.currentLoad}/{teacher.maxLoad} tiết
+                                                  </p>
+                                                </div>
+                                                <div className="text-xs">
+                                                  <div className={`w-2 h-2 rounded-full ${
+                                                    teacher.currentLoad / teacher.maxLoad < 0.8 ? 'bg-green-500' : 
+                                                    teacher.currentLoad / teacher.maxLoad < 0.95 ? 'bg-yellow-500' : 'bg-red-500'
+                                                  }`} />
+                                                </div>
+                                              </div>
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      )}
+
+                                      <CommandGroup heading="Tất cả giáo viên">
+                                        {teachers.map((teacher) => (
                                           <CommandItem
                                             key={teacher.id}
                                             onSelect={() => assignTeacherToSubject(selectedClass.id, subject.id, teacher.id)}
                                           >
                                             <div className="flex items-center space-x-3 w-full">
-                                              <Lightbulb className="w-4 h-4 text-amber-500" />
                                               <Avatar className="w-8 h-8">
                                                 <AvatarImage src={teacher.avatar} />
                                                 <AvatarFallback>
@@ -653,72 +755,153 @@ const BulkAssignmentHub = () => {
                                           </CommandItem>
                                         ))}
                                       </CommandGroup>
-                                    )}
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          </div>
 
-                                    <CommandGroup heading="Tất cả giáo viên">
-                                      {teachers.map((teacher) => (
-                                        <CommandItem
-                                          key={teacher.id}
-                                          onSelect={() => assignTeacherToSubject(selectedClass.id, subject.id, teacher.id)}
-                                        >
-                                          <div className="flex items-center space-x-3 w-full">
-                                            <Avatar className="w-8 h-8">
-                                              <AvatarImage src={teacher.avatar} />
-                                              <AvatarFallback>
-                                                {teacher.name.split(' ').pop()?.charAt(0)}
-                                              </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1">
-                                              <p className="font-medium">{teacher.name}</p>
-                                              <p className="text-sm text-muted-foreground">
-                                                {teacher.code} • {teacher.currentLoad}/{teacher.maxLoad} tiết
-                                              </p>
-                                            </div>
-                                            <div className="text-xs">
-                                              <div className={`w-2 h-2 rounded-full ${
-                                                teacher.currentLoad / teacher.maxLoad < 0.8 ? 'bg-green-500' : 
-                                                teacher.currentLoad / teacher.maxLoad < 0.95 ? 'bg-yellow-500' : 'bg-red-500'
-                                              }`} />
-                                            </div>
-                                          </div>
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          )}
-                        </div>
+                          <div className="col-span-2">
+                            <div className="text-center">
+                              <span className="font-medium">{subject.periodsPerWeek}</span>
+                              <span className="text-sm text-muted-foreground ml-1">tiết/tuần</span>
+                            </div>
+                          </div>
 
-                        <div className="col-span-2">
-                          <div className="text-center">
-                            <span className="font-medium">{subject.periodsPerWeek}</span>
-                            <span className="text-sm text-muted-foreground ml-1">tiết/tuần</span>
+                          <div className="col-span-1">
+                            {subject.hasConflict && (
+                              <AlertTriangle className="w-5 h-5 text-amber-500" />
+                            )}
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center text-muted-foreground">
+                  <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Chọn một lớp để bắt đầu phân công</h3>
+                  <p className="text-sm">
+                    Chọn một lớp từ danh sách bên trái để bắt đầu phân công giáo viên và môn học.
+                  </p>
+                </div>
+              </div>
+            )
+          ) : (
+            selectedTeacher ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-semibold">
+                    Phân công cho {selectedTeacher.name}
+                  </h2>
+                  <Badge variant="outline" className="text-sm">
+                    {selectedTeacher.currentLoad}/{selectedTeacher.maxLoad} tiết đã phân công
+                  </Badge>
+                </div>
 
-                        <div className="col-span-1">
-                          {subject.hasConflict && (
-                            <AlertTriangle className="w-5 h-5 text-amber-500" />
-                          )}
+                {/* Teacher Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <Users className="w-5 h-5 mr-2" />
+                      Thông tin Giáo viên
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center space-x-4 mb-4">
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={selectedTeacher.avatar} />
+                        <AvatarFallback>
+                          {selectedTeacher.name.split(' ').pop()?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{selectedTeacher.name}</h3>
+                        <p className="text-sm text-muted-foreground">{selectedTeacher.code}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm">Tải trọng:</span>
+                          <Progress 
+                            value={(selectedTeacher.currentLoad / selectedTeacher.maxLoad) * 100}
+                            className="w-20 h-2"
+                          />
+                          <span className="text-sm font-medium">
+                            {selectedTeacher.currentLoad}/{selectedTeacher.maxLoad}
+                          </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center text-muted-foreground">
-                <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Chọn một lớp để bắt đầu phân công</h3>
-                <p className="text-sm">
-                  Chọn một lớp từ danh sách bên trái để bắt đầu phân công giáo viên và môn học.
-                </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Môn học có thể dạy:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTeacher.qualifiedSubjects.map((subject, index) => (
+                          <Badge key={index} variant="secondary">{subject}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Current Assignments */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      Phân công hiện tại
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {/* Mock current assignments */}
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <span className="font-medium">6A1 - Toán</span>
+                          <p className="text-sm text-muted-foreground">4 tiết/tuần</p>
+                        </div>
+                        <Badge variant="secondary">Chủ nhiệm</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <span className="font-medium">6A2 - Toán</span>
+                          <p className="text-sm text-muted-foreground">4 tiết/tuần</p>
+                        </div>
+                        <Button variant="ghost" size="sm">Bỏ phân công</Button>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <span className="font-medium">6B1 - Toán</span>
+                          <p className="text-sm text-muted-foreground">4 tiết/tuần</p>
+                        </div>
+                        <Button variant="ghost" size="sm">Bỏ phân công</Button>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t">
+                      <Button className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Thêm phân công mới
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center text-muted-foreground">
+                  <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Chọn một giáo viên để bắt đầu phân công</h3>
+                  <p className="text-sm">
+                    Chọn một giáo viên từ danh sách bên trái để xem và quản lý phân công của họ.
+                  </p>
+                </div>
+              </div>
+            )
           )}
         </div>
       </div>
