@@ -120,7 +120,7 @@ const Index = () => {
   };
 
   const handleAssignmentManagement = () => {
-    navigate('/assignments');
+    navigate('/bulk-assignment');
   };
 
   const handleAnalyticsDashboard = () => {

@@ -44,7 +44,7 @@ const TeacherProfile = () => {
                 Phân công giảng dạy đã được chuyển sang trang riêng để quản lý tập trung và hiệu quả hơn.
               </p>
               <Button 
-                onClick={() => navigate('/assignments')}
+                onClick={() => navigate('/bulk-assignment')}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <BookOpen className="w-4 h-4 mr-2" />

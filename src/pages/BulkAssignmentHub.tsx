@@ -74,6 +74,26 @@ const BulkAssignmentHub = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // SEO
+  useEffect(() => {
+    document.title = 'Phân công Giảng dạy Hàng loạt';
+    const desc = 'Giao diện phân công giảng dạy hàng loạt theo lớp và giáo viên';
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', desc);
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', window.location.href);
+  }, []);
+  
   // Setup state
   const [academicYear, setAcademicYear] = useState('2024-2025');
   const [campus, setCampus] = useState('');
