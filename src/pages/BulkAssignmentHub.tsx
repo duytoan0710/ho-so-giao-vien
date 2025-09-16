@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, Users, BookOpen, AlertTriangle, CheckCircle, Lightbulb, Plus } from 'lucide-react';
+import { ArrowLeft, Search, Users, BookOpen, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,65 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useAssignment, AssignmentProvider, type Teacher, type ClassData } from '@/contexts/AssignmentContext';
 
-interface Teacher {
-  id: string;
-  name: string;
-  code: string;
-  avatar: string;
-  currentLoad: number;
-  maxLoad: number;
-  qualifiedSubjects: string[];
-  isAvailable: boolean;
-}
-
-interface ClassData {
-  id: string;
-  name: string;
-  grade: number;
-  campus: string;
-  totalSubjects: number;
-  assignedSubjects: number;
-  homeroomTeacher?: Teacher;
-  subjects: ClassSubject[];
-}
-
-interface ClassSubject {
-  id: string;
-  name: string;
-  periodsPerWeek: number;
-  isRequired: boolean;
-  assignedTeacher?: Teacher;
-  hasConflict?: boolean;
-  conflictMessage?: string;
-}
-
-interface Assignment {
-  classId: string;
-  subjectId: string;
-  teacherId: string;
-  role: 'teacher' | 'homeroom';
-}
-
-const BulkAssignmentHub = () => {
+const BulkAssignmentHubContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { state, dispatch, getTeacherAssignments, getClassProgress, getTeacherWorkload, canAssignTeacher } = useAssignment();
   
   // SEO
   useEffect(() => {
@@ -100,211 +50,113 @@ const BulkAssignmentHub = () => {
   const [gradeLevel, setGradeLevel] = useState('');
   const [groupingMode, setGroupingMode] = useState<'class' | 'teacher'>('class');
   
-  // Data state
-  const [classes, setClasses] = useState<ClassData[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  
   // Selection state
-  const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
-  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
   const [classSearch, setClassSearch] = useState('');
   const [teacherSearch, setTeacherSearch] = useState('');
-  const [teacherSearches, setTeacherSearches] = useState<Record<string, string>>({});
 
-  // Mock data initialization
+  // Generate demo classes when filters change
   useEffect(() => {
-    initializeMockData();
+    if (campus) {
+      generateDemoClasses();
+    }
   }, [campus, gradeLevel]);
 
-  const initializeMockData = () => {
-    // Mock teachers
-    const mockTeachers: Teacher[] = [
-      {
-        id: '1',
-        name: 'Nguyễn Văn An',
-        code: 'GV001',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-        currentLoad: 18,
-        maxLoad: 22,
-        qualifiedSubjects: ['Toán', 'Tin học'],
-        isAvailable: true,
-      },
-      {
-        id: '2',
-        name: 'Trần Thị Bình',
-        code: 'GV002',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=150&h=150&fit=crop&crop=face',
-        currentLoad: 20,
-        maxLoad: 22,
-        qualifiedSubjects: ['Ngữ văn', 'Lịch sử'],
-        isAvailable: true,
-      },
-      {
-        id: '3',
-        name: 'Lê Văn Cường',
-        code: 'GV003',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-        currentLoad: 15,
-        maxLoad: 22,
-        qualifiedSubjects: ['Vật lý', 'Toán'],
-        isAvailable: true,
-      },
-      {
-        id: '4',
-        name: 'Phạm Thị Dung',
-        code: 'GV004',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-        currentLoad: 19,
-        maxLoad: 22,
-        qualifiedSubjects: ['Hóa học', 'Sinh học'],
-        isAvailable: true,
-      },
-    ];
-
-    // Grade 6 standard subjects
-    const grade6Subjects = [
-      { name: 'Toán', periodsPerWeek: 4, isRequired: true },
-      { name: 'Ngữ văn', periodsPerWeek: 5, isRequired: true },
-      { name: 'Tiếng Anh', periodsPerWeek: 3, isRequired: true },
-      { name: 'Lịch sử & Địa lý', periodsPerWeek: 3, isRequired: true },
-      { name: 'GDCD', periodsPerWeek: 1, isRequired: true },
-      { name: 'Tin học', periodsPerWeek: 2, isRequired: true },
-      { name: 'Thể dục', periodsPerWeek: 2, isRequired: true },
-    ];
-
-    // Generate classes based on filters
-    let mockClasses: ClassData[] = [];
+  const generateDemoClasses = () => {
+    const campusPrefix = campus === 'main' ? 'A' : campus === 'branch1' ? 'B' : 'C';
+    const grades = gradeLevel && gradeLevel !== 'all' ? [parseInt(gradeLevel)] : [6, 7, 8, 9];
     
-    if (campus) {
-      const campusPrefix = campus === 'main' ? 'A' : campus === 'branch1' ? 'B' : 'C';
-      const grades = gradeLevel && gradeLevel !== 'all' ? [parseInt(gradeLevel)] : [6, 7, 8, 9];
-      
-      grades.forEach(grade => {
-        for (let classNum = 1; classNum <= 2; classNum++) {
-          const className = `${grade}${campusPrefix}${classNum}`;
-          const subjects = grade6Subjects.map(subject => ({
-            id: `${className}_${subject.name}`,
-            name: subject.name,
-            periodsPerWeek: subject.periodsPerWeek,
-            isRequired: subject.isRequired,
-            assignedTeacher: Math.random() > 0.7 ? mockTeachers[Math.floor(Math.random() * mockTeachers.length)] : undefined,
-          }));
-          
-          const assignedCount = subjects.filter(s => s.assignedTeacher).length;
-          
-          mockClasses.push({
-            id: className,
-            name: className,
-            grade,
-            campus,
-            totalSubjects: subjects.length,
-            assignedSubjects: assignedCount,
-            subjects,
-            homeroomTeacher: Math.random() > 0.5 ? mockTeachers[Math.floor(Math.random() * mockTeachers.length)] : undefined,
+    const demoClasses: ClassData[] = [];
+    
+    grades.forEach(grade => {
+      for (let classNum = 1; classNum <= 3; classNum++) {
+        const className = `${grade}${campusPrefix}${classNum}`;
+        
+        // Pre-assign some subjects randomly for demo
+        const subjectAssignments: Record<string, string> = {};
+        const shouldAssignSubjects = Math.random() > 0.3;
+        
+        if (shouldAssignSubjects) {
+          state.subjects.forEach(subject => {
+            if (Math.random() > 0.4) {
+              const qualifiedTeachers = state.teachers.filter(t => 
+                t.qualifiedSubjects.includes(subject.name)
+              );
+              if (qualifiedTeachers.length > 0) {
+                subjectAssignments[subject.id] = qualifiedTeachers[Math.floor(Math.random() * qualifiedTeachers.length)].id;
+              }
+            }
           });
         }
-      });
-    }
-
-    setClasses(mockClasses);
-    setTeachers(mockTeachers);
+        
+        demoClasses.push({
+          id: className,
+          name: className,
+          grade,
+          campus,
+          totalSubjects: state.subjects.length,
+          homeroomTeacherId: Math.random() > 0.4 ? state.teachers[Math.floor(Math.random() * state.teachers.length)].id : undefined,
+          subjectAssignments,
+        });
+      }
+    });
+    
+    dispatch({ type: 'SET_CLASSES', payload: demoClasses });
   };
 
-  const filteredClasses = classes.filter(cls =>
+  const filteredClasses = state.classes.filter(cls =>
     cls.name.toLowerCase().includes(classSearch.toLowerCase())
   );
 
-  const filteredTeachers = teachers.filter(teacher =>
+  const filteredTeachers = state.teachers.filter(teacher =>
     teacher.name.toLowerCase().includes(teacherSearch.toLowerCase()) ||
     teacher.code.toLowerCase().includes(teacherSearch.toLowerCase())
   );
 
-  const getTeacherSuggestions = (subjectName: string) => {
-    return teachers
-      .filter(teacher => teacher.qualifiedSubjects.includes(subjectName))
-      .sort((a, b) => (a.currentLoad / a.maxLoad) - (b.currentLoad / b.maxLoad));
-  };
+  const selectedClass = state.classes.find(c => c.id === selectedClassId);
+  const selectedTeacher = state.teachers.find(t => t.id === selectedTeacherId);
 
-  const assignTeacherToSubject = (classId: string, subjectId: string, teacherId: string) => {
-    const teacher = teachers.find(t => t.id === teacherId);
-    if (!teacher) return;
-
-    setClasses(prev => prev.map(cls => {
-      if (cls.id === classId) {
-        const updatedSubjects = cls.subjects.map(subject => {
-          if (subject.id === subjectId) {
-            return {
-              ...subject,
-              assignedTeacher: teacher,
-              hasConflict: false,
-              conflictMessage: undefined,
-            };
-          }
-          return subject;
-        });
-
-        const assignedCount = updatedSubjects.filter(s => s.assignedTeacher).length;
-        
-        return {
-          ...cls,
-          subjects: updatedSubjects,
-          assignedSubjects: assignedCount,
-        };
-      }
-      return cls;
-    }));
-
-    setHasUnsavedChanges(true);
-    
-    // Update selected class if it's the current one
-    if (selectedClass?.id === classId) {
-      setSelectedClass(prev => {
-        if (!prev) return prev;
-        const updatedSubjects = prev.subjects.map(subject => {
-          if (subject.id === subjectId) {
-            return { ...subject, assignedTeacher: teacher };
-          }
-          return subject;
-        });
-        return { ...prev, subjects: updatedSubjects };
+  const handleAssignSubject = (classId: string, subjectId: string, teacherId: string) => {
+    const validation = canAssignTeacher(teacherId, classId, subjectId);
+    if (!validation.canAssign) {
+      toast({
+        title: "Không thể phân công",
+        description: validation.conflicts.join(', '),
+        variant: "destructive",
       });
+      return;
     }
+
+    dispatch({ type: 'ASSIGN_SUBJECT', payload: { classId, subjectId, teacherId } });
+    toast({
+      title: "Thành công",
+      description: "Đã phân công giáo viên dạy môn học",
+    });
   };
 
-  const assignHomeroomTeacher = (classId: string, teacherId: string) => {
-    const teacher = teachers.find(t => t.id === teacherId);
-    if (!teacher) return;
+  const handleAssignHomeroom = (classId: string, teacherId: string) => {
+    dispatch({ type: 'ASSIGN_HOMEROOM', payload: { classId, teacherId } });
+    toast({
+      title: "Thành công", 
+      description: "Đã phân công giáo viên chủ nhiệm",
+    });
+  };
 
-    setClasses(prev => prev.map(cls => {
-      if (cls.id === classId) {
-        return { ...cls, homeroomTeacher: teacher };
-      }
-      return cls;
-    }));
-
-    setHasUnsavedChanges(true);
-    
-    if (selectedClass?.id === classId) {
-      setSelectedClass(prev => prev ? { ...prev, homeroomTeacher: teacher } : prev);
-    }
+  const handleRemoveAssignment = (classId: string, subjectId?: string, isHomeroom?: boolean) => {
+    dispatch({ type: 'REMOVE_ASSIGNMENT', payload: { classId, subjectId, isHomeroom } });
+    toast({
+      title: "Đã xóa",
+      description: "Đã hủy phân công",
+    });
   };
 
   const saveAllChanges = () => {
-    // Simulate saving
+    dispatch({ type: 'SAVE_CHANGES' });
     toast({
       title: "Thành công",
       description: "Đã lưu tất cả phân công thành công!",
     });
-    setHasUnsavedChanges(false);
-  };
-
-  const getProgressColor = (assigned: number, total: number) => {
-    const percentage = (assigned / total) * 100;
-    if (percentage === 100) return 'bg-green-500';
-    if (percentage >= 70) return 'bg-yellow-500';
-    return 'bg-red-500';
   };
 
   return (
@@ -376,10 +228,10 @@ const BulkAssignmentHub = () => {
 
               <Button 
                 onClick={saveAllChanges}
-                disabled={!hasUnsavedChanges}
+                disabled={!state.hasUnsavedChanges}
                 className="ml-4"
               >
-                {hasUnsavedChanges && (
+                {state.hasUnsavedChanges && (
                   <div className="w-2 h-2 bg-orange-400 rounded-full mr-2" />
                 )}
                 Lưu tất cả thay đổi
@@ -419,43 +271,55 @@ const BulkAssignmentHub = () => {
                   </div>
 
                   <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto">
-                    {filteredClasses.map((cls) => (
-                      <Card
-                        key={cls.id}
-                        className={`cursor-pointer transition-all hover:shadow-sm ${
-                          selectedClass?.id === cls.id ? 'ring-2 ring-primary' : ''
-                        }`}
-                        onClick={() => setSelectedClass(cls)}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-medium">{cls.name}</h3>
-                            {cls.homeroomTeacher && (
-                              <Badge variant="secondary" className="text-xs">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                CN
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">
-                                {cls.assignedSubjects}/{cls.totalSubjects} môn đã phân công
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {Math.round((cls.assignedSubjects / cls.totalSubjects) * 100)}%
-                              </span>
+                    {filteredClasses.map((cls) => {
+                      const progress = getClassProgress(cls.id);
+                      const homeroomTeacher = cls.homeroomTeacherId ? state.teachers.find(t => t.id === cls.homeroomTeacherId) : null;
+                      
+                      return (
+                        <Card
+                          key={cls.id}
+                          className={`cursor-pointer transition-all hover:shadow-sm ${
+                            selectedClassId === cls.id ? 'ring-2 ring-primary' : ''
+                          }`}
+                          onClick={() => setSelectedClassId(cls.id)}
+                        >
+                          <CardContent className="p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="font-medium">{cls.name}</h3>
+                              {homeroomTeacher && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  CN
+                                </Badge>
+                              )}
                             </div>
                             
-                            <Progress 
-                              value={(cls.assignedSubjects / cls.totalSubjects) * 100}
-                              className="h-2"
-                            />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                  {progress.assigned}/{progress.total} phân công hoàn tất
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {progress.percentage}%
+                                </span>
+                              </div>
+                              
+                              <Progress 
+                                value={progress.percentage}
+                                className="h-2"
+                              />
+                              
+                              {progress.percentage === 100 && (
+                                <div className="flex items-center text-green-600 text-xs">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Đã hoàn tất
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               </TabsContent>
@@ -473,60 +337,63 @@ const BulkAssignmentHub = () => {
                   </div>
 
                   <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto">
-                    {filteredTeachers.map((teacher) => (
-                      <Card
-                        key={teacher.id}
-                        className={`cursor-pointer transition-all hover:shadow-sm ${
-                          selectedTeacher?.id === teacher.id ? 'ring-2 ring-primary' : ''
-                        }`}
-                        onClick={() => setSelectedTeacher(teacher)}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage src={teacher.avatar} />
-                              <AvatarFallback>
-                                {teacher.name.split(' ').pop()?.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <h3 className="font-medium">{teacher.name}</h3>
-                              <p className="text-sm text-muted-foreground">{teacher.code}</p>
+                    {filteredTeachers.map((teacher) => {
+                      const workload = getTeacherWorkload(teacher.id);
+                      const assignments = getTeacherAssignments(teacher.id);
+                      
+                      return (
+                        <Card
+                          key={teacher.id}
+                          className={`cursor-pointer transition-all hover:shadow-sm ${
+                            selectedTeacherId === teacher.id ? 'ring-2 ring-primary' : ''
+                          }`}
+                          onClick={() => setSelectedTeacherId(teacher.id)}
+                        >
+                          <CardContent className="p-3">
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="w-10 h-10">
+                                <AvatarImage src={teacher.avatar} alt={teacher.name} />
+                                <AvatarFallback>{teacher.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                              </Avatar>
+                              
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <h3 className="font-medium text-sm">{teacher.name}</h3>
+                                  <Badge variant="outline" className="text-xs">
+                                    {teacher.code}
+                                  </Badge>
+                                </div>
+                                
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {teacher.qualifiedSubjects.join(', ')}
+                                </div>
+                                
+                                <div className="mt-2">
+                                  <div className="flex items-center justify-between text-xs mb-1">
+                                    <span className="text-muted-foreground">
+                                      Đã phân công: {workload.current}/{workload.max} tiết
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      {workload.percentage}%
+                                    </span>
+                                  </div>
+                                  <Progress 
+                                    value={workload.percentage}
+                                    className="h-1.5"
+                                  />
+                                  
+                                  {assignments.length > 0 && (
+                                    <div className="mt-1 text-xs text-muted-foreground">
+                                      {assignments.length} lớp được phân công
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <div className={`w-3 h-3 rounded-full ${
-                                teacher.currentLoad / teacher.maxLoad < 0.8 ? 'bg-green-500' : 
-                                teacher.currentLoad / teacher.maxLoad < 0.95 ? 'bg-yellow-500' : 'bg-red-500'
-                              }`} />
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">
-                                Tải trọng: {teacher.currentLoad}/{teacher.maxLoad} tiết
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {Math.round((teacher.currentLoad / teacher.maxLoad) * 100)}%
-                              </span>
-                            </div>
-                            
-                            <Progress 
-                              value={(teacher.currentLoad / teacher.maxLoad) * 100}
-                              className="h-2"
-                            />
-                            
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {teacher.qualifiedSubjects.map((subject, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                  {subject}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               </TabsContent>
@@ -535,369 +402,296 @@ const BulkAssignmentHub = () => {
         </div>
 
         {/* Workspace */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 bg-background">
           {groupingMode === 'class' ? (
             selectedClass ? (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold">
-                    Phân công cho lớp {selectedClass.name}
-                  </h2>
-                  <Badge variant="outline" className="text-sm">
-                    {selectedClass.assignedSubjects}/{selectedClass.totalSubjects} môn đã phân công
-                  </Badge>
-                </div>
-
-                {/* Homeroom Teacher Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <Users className="w-5 h-5 mr-2" />
-                      Giáo viên Chủ nhiệm
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+              <div className="h-full flex flex-col">
+                {/* Workspace Header */}
+                <div className="border-b bg-card p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold">
+                        Phân công cho lớp {selectedClass.name}
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Khối {selectedClass.grade} • Cơ sở {campus === 'main' ? 'Trụ sở chính' : `Phân hiệu ${campus.slice(-1)}`}
+                      </p>
+                    </div>
+                    
                     <div className="flex items-center space-x-4">
-                      {selectedClass.homeroomTeacher ? (
-                        <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                          <Avatar>
-                            <AvatarImage src={selectedClass.homeroomTeacher.avatar} />
-                            <AvatarFallback>
-                              {selectedClass.homeroomTeacher.name.split(' ').pop()?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{selectedClass.homeroomTeacher.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {selectedClass.homeroomTeacher.code} • {selectedClass.homeroomTeacher.currentLoad}/{selectedClass.homeroomTeacher.maxLoad} tiết
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => assignHomeroomTeacher(selectedClass.id, '')}
-                          >
-                            Thay đổi
-                          </Button>
+                      <div className="text-right">
+                        <div className="text-sm font-medium">
+                          {getClassProgress(selectedClass.id).assigned}/{getClassProgress(selectedClass.id).total} phân công hoàn tất
                         </div>
-                      ) : (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-64 justify-start">
-                              <Search className="w-4 h-4 mr-2" />
-                              Chọn giáo viên chủ nhiệm...
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-80" align="start">
-                            <Command>
-                              <CommandInput placeholder="Tìm kiếm giáo viên..." />
-                              <CommandList>
-                                <CommandEmpty>Không tìm thấy giáo viên.</CommandEmpty>
-                                <CommandGroup>
-                                  {teachers.map((teacher) => (
-                                    <CommandItem
-                                      key={teacher.id}
-                                      onSelect={() => assignHomeroomTeacher(selectedClass.id, teacher.id)}
-                                    >
-                                      <div className="flex items-center space-x-3 w-full">
-                                        <Avatar className="w-8 h-8">
-                                          <AvatarImage src={teacher.avatar} />
-                                          <AvatarFallback>
-                                            {teacher.name.split(' ').pop()?.charAt(0)}
-                                          </AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1">
-                                          <p className="font-medium">{teacher.name}</p>
-                                          <p className="text-sm text-muted-foreground">
-                                            {teacher.code} • {teacher.currentLoad}/{teacher.maxLoad} tiết
-                                          </p>
-                                        </div>
-                                        <div className="text-xs">
-                                          <div className={`w-2 h-2 rounded-full ${
-                                            teacher.currentLoad / teacher.maxLoad < 0.8 ? 'bg-green-500' : 
-                                            teacher.currentLoad / teacher.maxLoad < 0.95 ? 'bg-yellow-500' : 'bg-red-500'
-                                          }`} />
-                                        </div>
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                        <Progress 
+                          value={getClassProgress(selectedClass.id).percentage}
+                          className="w-32 h-2 mt-1"
+                        />
+                      </div>
+                      
+                      {getClassProgress(selectedClass.id).percentage === 100 && (
+                        <Badge variant="default" className="bg-green-100 text-green-800">
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Hoàn tất
+                        </Badge>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
-                {/* Subject Assignments */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <BookOpen className="w-5 h-5 mr-2" />
-                      Phân công Môn học
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {selectedClass.subjects.map((subject) => (
-                        <div
-                          key={subject.id}
-                          className="grid grid-cols-12 gap-4 items-center p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                        >
-                          <div className="col-span-3">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium">{subject.name}</span>
-                              {subject.isRequired && (
-                                <Badge variant="secondary" className="text-xs">Bắt buộc</Badge>
-                              )}
+                {/* Assignment Content */}
+                <div className="flex-1 p-6 overflow-y-auto">
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    {/* Homeroom Teacher Assignment */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Giáo viên Chủ nhiệm</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center space-x-4">
+                          {selectedClass.homeroomTeacherId ? (
+                            <div className="flex items-center space-x-3 flex-1">
+                              {(() => {
+                                const teacher = state.teachers.find(t => t.id === selectedClass.homeroomTeacherId);
+                                return teacher ? (
+                                  <>
+                                    <Avatar>
+                                      <AvatarImage src={teacher.avatar} />
+                                      <AvatarFallback>
+                                        {teacher.name.split(' ').map(n => n[0]).join('')}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <div className="font-medium">{teacher.name}</div>
+                                      <div className="text-sm text-muted-foreground">{teacher.code}</div>
+                                    </div>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => handleRemoveAssignment(selectedClass.id, undefined, true)}
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  </>
+                                ) : null;
+                              })()}
                             </div>
-                          </div>
-
-                          <div className="col-span-6">
-                            {subject.assignedTeacher ? (
-                              <div className="flex items-center space-x-3 p-2 bg-green-50 rounded border border-green-200">
-                                <Avatar className="w-8 h-8">
-                                  <AvatarImage src={subject.assignedTeacher.avatar} />
-                                  <AvatarFallback>
-                                    {subject.assignedTeacher.name.split(' ').pop()?.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                  <p className="font-medium text-sm">{subject.assignedTeacher.name}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {subject.assignedTeacher.code} • {subject.assignedTeacher.currentLoad}/{subject.assignedTeacher.maxLoad} tiết
-                                  </p>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => assignTeacherToSubject(selectedClass.id, subject.id, '')}
-                                >
-                                  Thay đổi
-                                </Button>
-                              </div>
-                            ) : (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button variant="outline" className="w-full justify-start">
-                                    <Search className="w-4 h-4 mr-2" />
-                                    Chọn giáo viên...
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80" align="start">
-                                  <Command>
-                                    <CommandInput placeholder="Tìm kiếm giáo viên..." />
-                                    <CommandList>
-                                      <CommandEmpty>Không tìm thấy giáo viên.</CommandEmpty>
-                                      
-                                      {/* Smart suggestions */}
-                                      {getTeacherSuggestions(subject.name).length > 0 && (
-                                        <CommandGroup heading="Gợi ý phù hợp">
-                                          {getTeacherSuggestions(subject.name).map((teacher) => (
-                                            <CommandItem
-                                              key={teacher.id}
-                                              onSelect={() => assignTeacherToSubject(selectedClass.id, subject.id, teacher.id)}
-                                            >
-                                              <div className="flex items-center space-x-3 w-full">
-                                                <Lightbulb className="w-4 h-4 text-amber-500" />
-                                                <Avatar className="w-8 h-8">
-                                                  <AvatarImage src={teacher.avatar} />
-                                                  <AvatarFallback>
-                                                    {teacher.name.split(' ').pop()?.charAt(0)}
-                                                  </AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex-1">
-                                                  <p className="font-medium">{teacher.name}</p>
-                                                  <p className="text-sm text-muted-foreground">
-                                                    {teacher.code} • {teacher.currentLoad}/{teacher.maxLoad} tiết
-                                                  </p>
-                                                </div>
-                                                <div className="text-xs">
-                                                  <div className={`w-2 h-2 rounded-full ${
-                                                    teacher.currentLoad / teacher.maxLoad < 0.8 ? 'bg-green-500' : 
-                                                    teacher.currentLoad / teacher.maxLoad < 0.95 ? 'bg-yellow-500' : 'bg-red-500'
-                                                  }`} />
-                                                </div>
-                                              </div>
-                                            </CommandItem>
-                                          ))}
-                                        </CommandGroup>
-                                      )}
-
-                                      <CommandGroup heading="Tất cả giáo viên">
-                                        {teachers.map((teacher) => (
-                                          <CommandItem
-                                            key={teacher.id}
-                                            onSelect={() => assignTeacherToSubject(selectedClass.id, subject.id, teacher.id)}
-                                          >
-                                            <div className="flex items-center space-x-3 w-full">
-                                              <Avatar className="w-8 h-8">
-                                                <AvatarImage src={teacher.avatar} />
-                                                <AvatarFallback>
-                                                  {teacher.name.split(' ').pop()?.charAt(0)}
-                                                </AvatarFallback>
-                                              </Avatar>
-                                              <div className="flex-1">
-                                                <p className="font-medium">{teacher.name}</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                  {teacher.code} • {teacher.currentLoad}/{teacher.maxLoad} tiết
-                                                </p>
-                                              </div>
-                                              <div className="text-xs">
-                                                <div className={`w-2 h-2 rounded-full ${
-                                                  teacher.currentLoad / teacher.maxLoad < 0.8 ? 'bg-green-500' : 
-                                                  teacher.currentLoad / teacher.maxLoad < 0.95 ? 'bg-yellow-500' : 'bg-red-500'
-                                                }`} />
-                                              </div>
-                                            </div>
-                                          </CommandItem>
-                                        ))}
-                                      </CommandGroup>
-                                    </CommandList>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
-                            )}
-                          </div>
-
-                          <div className="col-span-2">
-                            <div className="text-center">
-                              <span className="font-medium">{subject.periodsPerWeek}</span>
-                              <span className="text-sm text-muted-foreground ml-1">tiết/tuần</span>
+                          ) : (
+                            <div className="flex-1">
+                              <Select onValueChange={(value) => handleAssignHomeroom(selectedClass.id, value)}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Chọn giáo viên chủ nhiệm..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {state.teachers.map(teacher => (
+                                    <SelectItem key={teacher.id} value={teacher.id}>
+                                      <div className="flex items-center space-x-2">
+                                        <span>{teacher.name}</span>
+                                        <Badge variant="outline">{teacher.code}</Badge>
+                                        <span className="text-xs text-muted-foreground">
+                                          ({getTeacherWorkload(teacher.id).current}/{getTeacherWorkload(teacher.id).max} tiết)
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
-                          </div>
-
-                          <div className="col-span-1">
-                            {subject.hasConflict && (
-                              <AlertTriangle className="w-5 h-5 text-amber-500" />
-                            )}
-                          </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+
+                    {/* Subject Assignments */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Phân công môn học</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {state.subjects.map((subject) => {
+                            const assignedTeacherId = selectedClass.subjectAssignments[subject.id];
+                            const assignedTeacher = assignedTeacherId ? state.teachers.find(t => t.id === assignedTeacherId) : null;
+                            const qualifiedTeachers = state.teachers.filter(t => t.qualifiedSubjects.includes(subject.name));
+                            
+                            return (
+                              <div key={subject.id} className="flex items-center space-x-4 p-4 border rounded-lg">
+                                <div className="w-32">
+                                  <div className="font-medium">{subject.name}</div>
+                                  <div className="text-sm text-muted-foreground">{subject.periodsPerWeek} tiết/tuần</div>
+                                </div>
+                                
+                                <div className="flex-1">
+                                  {assignedTeacher ? (
+                                    <div className="flex items-center space-x-3">
+                                      <Avatar className="w-8 h-8">
+                                        <AvatarImage src={assignedTeacher.avatar} />
+                                        <AvatarFallback>
+                                          {assignedTeacher.name.split(' ').map(n => n[0]).join('')}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div>
+                                        <div className="font-medium text-sm">{assignedTeacher.name}</div>
+                                        <div className="text-xs text-muted-foreground">{assignedTeacher.code}</div>
+                                      </div>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                        onClick={() => handleRemoveAssignment(selectedClass.id, subject.id)}
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Select onValueChange={(value) => handleAssignSubject(selectedClass.id, subject.id, value)}>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Chọn giáo viên..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {qualifiedTeachers.map(teacher => {
+                                          const workload = getTeacherWorkload(teacher.id);
+                                          return (
+                                            <SelectItem key={teacher.id} value={teacher.id}>
+                                              <div className="flex items-center space-x-2">
+                                                <span>{teacher.name}</span>
+                                                <Badge variant="outline">{teacher.code}</Badge>
+                                                <span className="text-xs text-muted-foreground">
+                                                  ({workload.current}/{workload.max} tiết)
+                                                </span>
+                                              </div>
+                                            </SelectItem>
+                                          );
+                                        })}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center text-muted-foreground">
-                  <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Chọn một lớp để bắt đầu phân công</h3>
-                  <p className="text-sm">
-                    Chọn một lớp từ danh sách bên trái để bắt đầu phân công giáo viên và môn học.
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground">Chọn một lớp để bắt đầu phân công</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Chọn lớp từ danh sách bên trái để xem và chỉnh sửa phân công giảng dạy
                   </p>
                 </div>
               </div>
             )
           ) : (
             selectedTeacher ? (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold">
-                    Phân công cho {selectedTeacher.name}
-                  </h2>
-                  <Badge variant="outline" className="text-sm">
-                    {selectedTeacher.currentLoad}/{selectedTeacher.maxLoad} tiết đã phân công
-                  </Badge>
-                </div>
-
-                {/* Teacher Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <Users className="w-5 h-5 mr-2" />
-                      Thông tin Giáo viên
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center space-x-4 mb-4">
+              <div className="h-full flex flex-col">
+                {/* Teacher Workspace Header */}
+                <div className="border-b bg-card p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
                       <Avatar className="w-12 h-12">
                         <AvatarImage src={selectedTeacher.avatar} />
                         <AvatarFallback>
-                          {selectedTeacher.name.split(' ').pop()?.charAt(0)}
+                          {selectedTeacher.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{selectedTeacher.name}</h3>
-                        <p className="text-sm text-muted-foreground">{selectedTeacher.code}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm">Tải trọng:</span>
-                          <Progress 
-                            value={(selectedTeacher.currentLoad / selectedTeacher.maxLoad) * 100}
-                            className="w-20 h-2"
-                          />
-                          <span className="text-sm font-medium">
-                            {selectedTeacher.currentLoad}/{selectedTeacher.maxLoad}
-                          </span>
-                        </div>
+                      <div>
+                        <h2 className="text-xl font-semibold">
+                          Phân công của giáo viên: {selectedTeacher.name}
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedTeacher.code} • Chuyên môn: {selectedTeacher.qualifiedSubjects.join(', ')}
+                        </p>
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Môn học có thể dạy:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedTeacher.qualifiedSubjects.map((subject, index) => (
-                          <Badge key={index} variant="secondary">{subject}</Badge>
-                        ))}
+                    <div className="text-right">
+                      <div className="text-sm font-medium">
+                        Tổng số tiết: {getTeacherWorkload(selectedTeacher.id).current}/{getTeacherWorkload(selectedTeacher.id).max} tiết/tuần
                       </div>
+                      <Progress 
+                        value={getTeacherWorkload(selectedTeacher.id).percentage}
+                        className="w-32 h-2 mt-1"
+                      />
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
-                {/* Current Assignments */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <BookOpen className="w-5 h-5 mr-2" />
-                      Phân công hiện tại
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {/* Mock current assignments */}
-                      <div className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <span className="font-medium">6A1 - Toán</span>
-                          <p className="text-sm text-muted-foreground">4 tiết/tuần</p>
+                {/* Teacher Assignments Content */}
+                <div className="flex-1 p-6 overflow-y-auto">
+                  <div className="max-w-4xl mx-auto">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Danh sách phân công hiện tại</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {getTeacherAssignments(selectedTeacher.id).map((assignment, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                <div className="w-20">
+                                  <Badge variant="secondary">
+                                    {assignment.className}
+                                  </Badge>
+                                </div>
+                                
+                                <div>
+                                  {assignment.role === 'homeroom' ? (
+                                    <div>
+                                      <div className="font-medium flex items-center">
+                                        <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                                        Giáo viên Chủ nhiệm
+                                      </div>
+                                      <div className="text-sm text-muted-foreground">Quản lý lớp học</div>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <div className="font-medium">{assignment.subjectName}</div>
+                                      <div className="text-sm text-muted-foreground">
+                                        {assignment.periodsPerWeek} tiết/tuần
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleRemoveAssignment(
+                                  assignment.classId,
+                                  assignment.role === 'subject' ? state.subjects.find(s => s.name === assignment.subjectName)?.id : undefined,
+                                  assignment.role === 'homeroom'
+                                )}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          
+                          {getTeacherAssignments(selectedTeacher.id).length === 0 && (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                              <p>Giáo viên chưa được phân công lớp học nào</p>
+                            </div>
+                          )}
                         </div>
-                        <Badge variant="secondary">Chủ nhiệm</Badge>
-                      </div>
-                      <div className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <span className="font-medium">6A2 - Toán</span>
-                          <p className="text-sm text-muted-foreground">4 tiết/tuần</p>
-                        </div>
-                        <Button variant="ghost" size="sm">Bỏ phân công</Button>
-                      </div>
-                      <div className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <span className="font-medium">6B1 - Toán</span>
-                          <p className="text-sm text-muted-foreground">4 tiết/tuần</p>
-                        </div>
-                        <Button variant="ghost" size="sm">Bỏ phân công</Button>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 pt-4 border-t">
-                      <Button className="w-full">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Thêm phân công mới
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center text-muted-foreground">
-                  <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Chọn một giáo viên để bắt đầu phân công</h3>
-                  <p className="text-sm">
-                    Chọn một giáo viên từ danh sách bên trái để xem và quản lý phân công của họ.
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground">Chọn một giáo viên để xem phân công</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Chọn giáo viên từ danh sách bên trái để xem danh sách phân công hiện tại
                   </p>
                 </div>
               </div>
@@ -906,6 +700,14 @@ const BulkAssignmentHub = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const BulkAssignmentHub = () => {
+  return (
+    <AssignmentProvider>
+      <BulkAssignmentHubContent />
+    </AssignmentProvider>
   );
 };
 
