@@ -174,7 +174,6 @@ const Index = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-foreground">Danh sách Giáo viên</h1>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -207,6 +206,18 @@ const Index = () => {
                 <Plus className="w-4 h-4 mr-2" />
                 Thêm mới một giáo viên
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <MoreHorizontal className="w-4 h-4 mr-2" />
+                    Thao tác
+                    <ChevronDown className="w-4 h-4 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {/* Actions will be added here */}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
